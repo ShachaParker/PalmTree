@@ -10,14 +10,19 @@ from palmtree import dataset
 from palmtree import trainer
 import pickle as pkl
 
-print(palmtree.__file__)
-vocab_path = "cdfg_bert_1/vocab"
-train_cfg_dataset = "data/training/cdfg_bert_1/cfg_train.txt"
-train_dfg_dataset = "data/training/cdfg_bert_1/dfg_train.txt"
-test_dataset = "data/training/cdfg_bert_1/test.txt"
-sent_dataset = "data/sentence.pkl"
-output_path = "cdfg_bert_1/transformer"
+# For some reason this import was not included but is necessary
+import bert_pytorch
 
+print(palmtree.__file__)
+# these paths may need to be non-relative, which means the absolute path
+vocab_path = "./data/vocab/vocab.txt"
+train_cfg_dataset = "./data/training/cdfg_bert_1/cfg_train.txt"
+train_dfg_dataset = "./data/training/cdfg_bert_1/cfg_train.txt"
+test_dataset = "./data/training/cdfg_bert_1/test.txt"
+sent_dataset = "./data/sentence.pkl"
+output_path = "./cdfg_bert_1/transformer"
+
+'''
 with open(train_cfg_dataset, "r", encoding="utf-8") as f1:
     with open(train_dfg_dataset, "r", encoding="utf-8") as f2:
         vocab = dataset.WordVocab([f1, f2], max_size=13000, min_freq=1)
@@ -25,6 +30,7 @@ with open(train_cfg_dataset, "r", encoding="utf-8") as f1:
 print("VOCAB SIZE:", len(vocab))
 vocab.save_vocab(vocab_path)
 
+'''
 
 print("Loading Vocab", vocab_path)
 vocab = dataset.WordVocab.load_vocab(vocab_path)

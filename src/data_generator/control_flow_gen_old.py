@@ -14,6 +14,7 @@ import math
 import pydot
 
 def parse_instruction(ins):
+    print(f"Debug: parse_instruction called with ins={ins}")
     ins = re.sub('\s+', ', ', ins, 1)
     parts = ins.split(', ')
     operand = []
@@ -28,40 +29,43 @@ def parse_instruction(ins):
     opcode = parts[0]
     return ' '.join([opcode]+operand)
 
-def random_walk(g, length):
+# Modify random_walk function to use the node parts
+def random_walk(g,length):
+    print(f"Debug: random_walk called with g={g}, length={length}")
+    # Read label of graph
+    # g.node should be id
+    # g.node.label
     sequence = []
     for n, data in g.nodes(data=True):  # Adjusted to iterate over nodes with data
+        print("node:", n)
+        print("Data", data)
+        match = re.search(r'<BR/>([^>]+)>', data['label'])
+        if match:
+            label = match.group(1).strip()
+            print(f"Debug: Extracted text for node {n}: {label}")
         s = []
         l = 0
-        # Extract text between <BR/> and the next '>'
-        if 'label' in data:
-            match = re.search(r'<BR/>([^>]+)>', data['label'])
-            if match:
-                label = match.group(1).strip()
-                s.append(parse_instruction(label))
+        s.append(parse_instruction(label))  # Use text after br>
         cur = n
         while l < length:
             nbs = list(g.successors(cur))
             if len(nbs):
                 cur = random.choice(nbs)
-                if 'label' in g.nodes[cur]:  # Access 'label' from node data
-                    match = re.search(r'<BR/>([^>]+)>', g.nodes[cur]['label'])
-                    if match:
-                        label = match.group(1).strip()
-                        s.append(parse_instruction(label))
-                        l += 1
+                if 'text' in g.nodes[cur]:  # Access 'text' from node data
+                    s.append(parse_instruction(label))  # Use g.nodes[cur]['text']
+                    l += 1
                 else:
                     break
             else:
                 break
-        sequence.append(s)
+            sequence.append(s)
         if len(sequence) > 5000:
-            print("Early stop, sequence length exceeded 5000")
+            print("early stop")
             return sequence[:5000]
     return sequence
 
 def process_file(f, window_size):
-    # print(f"Debug: process_file called with f={f}, window_size={window_size}")
+    print(f"Debug: process_file called with f={f}, window_size={window_size}")
 
     '''
     symbol_map = {}
@@ -93,14 +97,17 @@ def process_file(f, window_size):
             for edge in block.outgoing_edges:
                 G.add_edge(predecessor, edge.target.start)
 
-    '''
+        '''
 
     function_graphs = {}
     symbol_map = {}
     string_map = {}
 
-    # print("Graph", f)
+    # For graph in f, assign G to that graph
+    
+    print("Graph", f)
     (G,) = pydot.graph_from_dot_file(f)
+    # Convert to networkx
     G = nx.drawing.nx_pydot.from_pydot(G)
     
     for node, data in G.nodes(data=True):
@@ -124,22 +131,21 @@ def process_file(f, window_size):
     # gc.collect()
 
 def main():
-    # Set the path to the folder containing the binary files
-    # may need to be changed to absolute path
-    bin_folder = '../data/output/cfg' 
+    # Set the path to the folder containing the CFG files
+    # may need to be the absolute path
+    bin_folder = './data/output/cfg' 
     file_lst = []
+    str_counter = Counter()
     window_size = 1
     for parent, subdirs, files in os.walk(bin_folder):
         if files:
             for f in files:
                 file_lst.append(os.path.join(parent,f))
-    i = 0
-    length = len(file_lst)
+    i=0
     for f in file_lst:
-        if i % 100 == 0:
-            print(f"Processing file {i}/{length}: {f}")
+        print(i,'/', len(file_lst))
         process_file(f, window_size)
-        i += 1
+        i+=1
 
 if __name__ == "__main__":
     main()

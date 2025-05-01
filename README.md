@@ -1,3 +1,33 @@
+# PalmTree
+## Created by Xuezixiang Li, Yu Qu, and Heng Yin
+## Fork of original source by Shacha Parker
+
+This fork of PalmTree has been modified to work without BinaryNinja, and instead uses the Ghidra and Joern tools.
+
+##### Requirements:
+Ghidra should be installed and a project should be created that encompasses this folder. Joern should be installed and a path to its CLI should be provided in bin_cpg_extraction.py.
+
+Be sure to satisfy all import statements in bin_cpg_extraction.py, its related files, and train_palmtree.py.
+
+A library of binary files is necessary to train the model.
+
+##### Setup:
+
+File paths/folders are all given as relative. If they are not found when the program is found, they have to be changed to an absolute path. Relevant files that use paths are:
+- train_palmtree.py
+- bin_cpg_extraction.py
+- control_flow_gen.py
+- dataflow_gen.py
+
+The old version of control flow graph generator still exists for reference.
+
+To run PalmTree training in /src, one has to first acquire disassembled binary files. Place a library of binary files in /src/data/input, and run bin_cpg_extraction. It should generate files in both /intermediary_files and /output.
+
+Then, run train_palmtree, which if you have enough computer resources, should output a trained model for use in tasks like BCSD.
+
+
+## Original README.md below
+
 # 🌴PalmTree
 
 This is the official repository for 🌴PalmTree, which is a pre-train Language model for assembly. We will actively update it.

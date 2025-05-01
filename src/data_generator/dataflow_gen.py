@@ -1,4 +1,4 @@
-from binaryninja import *
+#from binaryninja import *
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,9 +13,10 @@ import pickle
 from  collections import Counter
 from memory_profiler import profile
 import gc
+import pydot
 
 
-def parse_instruction(ins, symbol_map, string_map):
+def parse_instruction(ins):
     ins = re.sub('\s+', ', ', ins, 1)
     parts = ins.split(', ')
     operand = []
@@ -24,31 +25,30 @@ def parse_instruction(ins, symbol_map, string_map):
     for i in range(len(operand)):
         symbols = re.split('([0-9A-Za-z]+)', operand[i])
         for j in range(len(symbols)):
-            if symbols[j][:2] == '0x' and len(symbols[j]) >= 6:
-                if int(symbols[j], 16) in symbol_map:
-                    symbols[j] = "symbol" # function names
-                elif int(symbols[j], 16) in string_map:
-                    symbols[j] = "string" # constant strings
-                else:
-                    symbols[j] = "address" # addresses 
+            symbols[j] = "address" # addresses 
         operand[i] = ' '.join(symbols)
     opcode = parts[0]
     return ' '.join([opcode]+operand)
 
 
-def random_walk(g,length, symbol_map, string_map):
+def random_walk(g,length):
     sequence = []
-    for n in g:
-        if n != -1 and g.node[n]['text'] != None:
-            s = []
-            l = 0
-            s.append(parse_instruction(g.node[n]['text'], symbol_map, string_map))
+    for n, data in g.nodes(data=True):
+        s = []
+        l = 0
+        if 'label' in data:
+            match = re.search(r'<BR/>([^>]+)>', data['label'])
+            if match:
+                label = match.group(1).strip()
+        match = re.search(r'<BR/>([^>]+)>', data['label'])
+        if n != -1 and label != '':
+            s.append(parse_instruction(label))
             cur = n
             while l < length:
                 nbs = list(g.successors(cur))
                 if len(nbs):
                     cur = random.choice(nbs)
-                    s.append(parse_instruction(g.node[cur]['text'], symbol_map, string_map))
+                    s.append(g.nodes[cur]['label'])
                     l += 1
                 else:
                     break
@@ -58,6 +58,8 @@ def random_walk(g,length, symbol_map, string_map):
 
 
 def process_file(f):
+
+    '''
     symbol_map = {}
     string_map = {}
     print(f)
@@ -98,12 +100,20 @@ def process_file(f):
         for node in G.nodes:
             if not G.in_degree(node):
                 G.add_edge(-1, node)
+        '''
+    function_graphs = {}
+
+    (G,) = pydot.graph_from_dot_file(f)
+    G = nx.drawing.nx_pydot.from_pydot(G)
+
+    for node, data in G.nodes(data=True):
+
         if len(G.nodes) > 2:
-            function_graphs[func.name] = G
+            function_graphs[G.name] = G
     
     with open('dfg_train.txt', 'a') as w:
         for name, graph in function_graphs.items():
-            sequence = random_walk(graph, 40, symbol_map, string_map)
+            sequence = random_walk(graph, 40)
             for s in sequence:
                if len(s) >= 2:
                     for idx in range(1, len(s)):
@@ -122,7 +132,7 @@ def process_string(f):
 
 
 def main():
-    bin_folder = '/path/to/binaries'
+    bin_folder = '../data/output/dfg'
     file_lst = []
     str_counter = Counter()
     for parent, subdirs, files in os.walk(bin_folder):
