@@ -26,7 +26,7 @@ To run PalmTree training in /src, one has to first acquire disassembled binary f
 Then, run train_palmtree, which if you have enough computer resources, should output a trained model for use in tasks like BCSD.
 
 
-## Original README.md below
+## Original README.md
 
 # 🌴PalmTree
 
